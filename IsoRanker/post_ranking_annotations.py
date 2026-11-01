@@ -339,13 +339,18 @@ def process_vep_vcf(vcf_file, output_dir, output_filename):
                 csq_values = csq_entry.split("|")
                 csq_dict = dict(zip(csq_fields, csq_values))
 
-                max_af_str = csq_dict.get("MAX_AF", "1")
-                try:
-                    max_af = float(max_af_str)
-                except ValueError:
-                    max_af = 1.0
+                max_af_str = csq_dict.get("MAX_AF", "")
 
-                if max_af >= 0.01:
+                if max_af_str in ("", ".", None):
+                    max_af = np.nan
+                else:
+                    try:
+                        max_af = float(max_af_str)
+                    except (ValueError, TypeError):
+                        max_af = np.nan
+
+                # Only filter when an AF is actually known and >= 1%
+                if pd.notna(max_af) and max_af >= 0.01:
                     continue
 
                 spliceai_columns = [
